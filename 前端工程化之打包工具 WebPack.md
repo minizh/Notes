@@ -21,33 +21,113 @@ webpack 属于构建工具中的一种
 
 webpack.config.js
 ```
-  const path = require('path');
-  const HtmlWebpackPlugin = require('html-webpack-plugin');
-  const CleanWebpackPlugin = require('clean-webpack-plugin');
-  const webpack = require('webpack');
+ const path = require("path");
+const HtmlWebpackPlugin = require("html-webpack-plugin");
+const webpack = require("webpack");
+// 将CSS提取为独立的文件的插件，对每个包含css的js文件都会创建一个CSS文件，支持按需加载css和sourceMap
+const MiniCssExtractPlugin = require("mini-css-extract-plugin");
+const devMode = process.env.NODE_ENV !== "production";
 
-  module.exports = {
-    entry: {
-       app: './src/index.js',
-       print: './src/print.js'
-       app: './src/index.js'
-    },
-    devtool: 'inline-source-map',
-    devServer: {
-      contentBase: './dist',
-      hot: true
-    },
-    plugins: [
-      new CleanWebpackPlugin(['dist']),
-      new HtmlWebpackPlugin({
-        title: 'Hot Module Replacement'
-      }),
-      new webpack.NamedModulesPlugin(),
-      new webpack.HotModuleReplacementPlugin()
-    ],
-    output: {
-      filename: '[name].bundle.js',
-      path: path.resolve(__dirname, 'dist')
-    }
-  };
+const config = {
+	entry: "./src/index.js",
+	output: {
+		filename: "bundle.js",
+		path: path.resolve(__dirname, "dist", "assets"),
+		publicPath: "/assets/",
+	},
+	module: {
+		rules: [
+			{
+				test: /\.(sa|sc|c)ss$/,
+				use: [
+					{
+						loader: devMode ? "style-loader" : MiniCssExtractPlugin.loader,
+						options: {
+							// 这里可以指定一个 publicPath
+							// 默认使用 webpackOptions.output中的publicPath
+							publicPath: "/assets/css/",
+						},
+					},
+					{ loader: "css-loader" }, // 将 CSS 转化成 CommonJS 模块
+					{ loader: "sass-loader" }, // 将 Sass 编译成 CSS
+					{ loader: "postcss-loader" }, // 将 Sass 编译成 CSS
+				],
+			},
+			// html中引用的静态资源在这里处理,默认配置参数attrs=img:src,处理图片的src引用的资源.
+			{
+				test: /\.html$/,
+				loader: "html-loader",
+				options: {
+					// 除了img的src,还可以继续配置处理更多html引入的资源(不能在页面直接写路径,又需要webpack处理怎么办?先require再js写入).
+					attrs: ["img:src", "img:data-src", "audio:src"],
+					minimize: false,
+					removeComments: true,
+					collapseWhitespace: false,
+				},
+			},
+			{
+				test: /\.(png|jpg|jpeg|gif|svg)$/,
+				use: [
+					{
+						loader: "url-loader",
+						options: {
+							limit: 5000, //小于该值的图片会使用base64编码，5000/1024k大约5kb
+							name: "[name].[hash:8].[ext]", //打包后的图片名称 [ext]指图片格式
+							outputPath: "/assets/img/", //这个是图片输出地址，图片路径不对时候需要注意
+						},
+					},
+					{
+						loader: "img-loader", // 图片压缩
+						options: {
+							plugins: [
+								require("imagemin-mozjpeg")({
+									//这个是处理图片的格式jpeg，需要处理哪些格式都需要在此配置，
+									quality: "80", // 压缩质量，这个是压缩图片80%
+								}),
+								require("imagemin-pngquant")({
+									floyd: 0.5,
+									speed: 2,
+								}),
+							],
+						},
+					},
+				],
+			},
+			{
+				test: /\.(woff2?|eot|ttf|otf)(\?.*)?$/, // 字体文件
+				use: [
+					{
+						loader: "url-loader",
+						options: {
+							name: "[name].[hash:8].[ext]",
+							limit: 5000, // fonts file size <= 5KB, use 'base64'; else, output svg file
+							outputPath: "/assets/fonts/", //文字输出路径
+						},
+					},
+				],
+			},
+		],
+	},
+	devServer: {
+		hot: true,
+	},
+	plugins: [
+		// 该插件将为你生成一个 HTML5 文件， 其中包括使用 script 标签的 body 中的所有 webpack 包。
+		new HtmlWebpackPlugin({
+			filename: "index.html",
+			template: "template.html",
+		}),
+		new MiniCssExtractPlugin({
+			filename: "[name].css",
+			chunkFilename: "[id].css",
+		}),
+		new webpack.DefinePlugin({
+			"process.env.NODE_ENV": JSON.stringify(process.env.NODE_ENV),
+		}),
+		new webpack.HotModuleReplacementPlugin(),
+	],
+};
+
+module.exports = config;
+
 ```
