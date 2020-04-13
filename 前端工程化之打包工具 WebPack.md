@@ -19,9 +19,9 @@ webpack 属于构建工具中的一种
 4. plugin ：处理 loader 无法解决的问题及功能的扩展
 5. 模式/兼容性
 
-webpack.config.js
+核心配置demo webpack.config.js 
 ```
- const path = require("path");
+const path = require("path");
 const HtmlWebpackPlugin = require("html-webpack-plugin");
 const webpack = require("webpack");
 // 将CSS提取为独立的文件的插件，对每个包含css的js文件都会创建一个CSS文件，支持按需加载css和sourceMap
