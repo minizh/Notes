@@ -27,6 +27,9 @@ const webpack = require("webpack");
 // 将CSS提取为独立的文件的插件，对每个包含css的js文件都会创建一个CSS文件，支持按需加载css和sourceMap
 const MiniCssExtractPlugin = require("mini-css-extract-plugin");
 const devMode = process.env.NODE_ENV !== "production";
+const UglifyJsPlugin = require('uglifyjs-webpack-plugin');
+const OptimizeCssAssetsPlugin = require('optimize-css-assets-webpack-plugin');
+const CopyWebpackPlugin = require('copy-webpack-plugin');
 
 const config = {
 	entry: "./src/index.js",
@@ -34,6 +37,18 @@ const config = {
 		filename: "bundle.js",
 		path: path.resolve(__dirname, "dist", "assets"),
 		publicPath: "/assets/",
+	},
+	optimization: {
+	    minimizer: [
+	      new TerserPlugin({
+		cache: true,
+		parallel: true,
+		sourceMap: true, // Must be set to true if using source-maps in production
+		terserOptions: {
+		  // https://github.com/webpack-contrib/terser-webpack-plugin#terseroptions
+		}
+	      }),
+	    ],
 	},
 	module: {
 		rules: [
@@ -106,6 +121,17 @@ const config = {
 					},
 				],
 			},
+			{
+			      test: /\.m?js$/,
+			      exclude: /(node_modules|bower_components)/,
+			      use: {
+				loader: 'babel-loader',
+				options: {
+				  presets: ['@babel/preset-env'],
+				  plugins: [require('@babel/plugin-transform-object-rest-spread')]
+				}
+			      }
+			},
 		],
 	},
 	devServer: {
@@ -121,6 +147,34 @@ const config = {
 			filename: "[name].css",
 			chunkFilename: "[id].css",
 		}),
+		new UglifyJsPlugin({
+		    parallel: true,
+		    uglifyOptions: {
+			output: {
+			    beautify: true,
+			    comments: false
+			},
+			mangle: {
+			    // keep_fnames: true
+			},
+			compress: {
+			    warnings: false,
+			    // keep_fnames: true,
+			    negate_iife: false // we need this for lazy v8
+			}
+		    }
+		}),
+		new OptimizeCssAssetsPlugin({
+		    assetNameRegExp: /\.css\.*(?!.*map)/g,
+		    cssProcessor: require('cssnano'),
+		    cssProcessorOptions: {
+			discardComments: { removeAll: true },
+			// 避免 cssnano 重新计算 z-index
+			safe: true
+		    },
+		    canPrint: true
+		}),
+		new CopyWebpackPlugin([]),
 		new webpack.DefinePlugin({
 			"process.env.NODE_ENV": JSON.stringify(process.env.NODE_ENV),
 		}),
