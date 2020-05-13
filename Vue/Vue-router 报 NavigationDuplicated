@@ -45,3 +45,5 @@ router.push('/location').catch(err => {err})
 ##### 方案4
 
 如果你使用了 Element-UI，并且方案2无法解决你的问题。那么你只能用方案1来固定你的 vue-router 版本了。这是因为 Element-UI 的 el-menu 在重复点击路由的时候报的错误（ Element 也出现该问题是因为 Element 也使用了 vue-router ），而且这个错误是 Element-UI 内部的路由问题，你无法通过方案2和3去解决。只能选择暂时不升级 Vue-router。
+
+好消息是 Element-UI 在2.13.0版本中解决了这个问题。参考 https://github.com/ElemeFE/element/releases/tag/v2.13.0
