@@ -218,7 +218,7 @@ key 的特殊属性主要用在 Vue 的虚拟 DOM 算法，在新旧 nodes 对�
 
 1. 当你利用索引直接设置一个项时，例如：vm.items[indexOfItem] = newValue
 
-> 原因：对于数组，vue 初始化的时候是无法设置好所有属性（索引），并非通过 defineProperty， 而是通过**监听**能够直接修改数组本身的方法（例如：push, pop, shift, splice 等）来实现响应式的。
+> 原因：对于数组，vue 初始化的时候是无法设置好所有属性（索引），并非通过 defineProperty， 而是通过**监听**能够直接修改数组本身的方法（例如：push, pop, shift, splice 等）来实现响应式的；另外性能开销也是一个原因，监听数组所有索引是不现实的。
 
 2. 当你修改数组的长度时，例如：vm.items.length = newLength
 
